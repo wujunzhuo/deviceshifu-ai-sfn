@@ -40,6 +40,22 @@ curl https://openai.vivgrid.com/v1/chat/completions \
    }'
 ```
 
+4. Run set_plc_output SFN
+
 ```sh
-open ./image.png
+cd set_plc_output
+
+export YOMO_SFN_CREDENTIAL="app-key-secret:$VIVGRID_TOKEN"
+
+yomo run app.go
+```
+
+```sh
+curl https://openai.vivgrid.com/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $VIVGRID_TOKEN" \
+  -d '{
+     "model": "gpt-4o-mini",
+     "messages": [{"role": "user", "content": "Can you set the PLC output to true?"}]
+   }'
 ```
