@@ -14,10 +14,8 @@ uvicorn mock_server:app --port 30080
 
 3. Get vivgrid.com token
 
-# https://dashboard.vivgrid.com
-
 ```sh
-export VIVGRID_TOKEN="********"
+export VIVGRID_TOKEN="********" # get from https://dashboard.vivgrid.com
 ```
 
 4. Run get_image SFN
@@ -26,6 +24,8 @@ export VIVGRID_TOKEN="********"
 cd get_image
 
 export YOMO_SFN_CREDENTIAL="app-key-secret:$VIVGRID_TOKEN"
+export OPENAI_API_KEY="sk-******"
+export OPENAI_BASE_URL="https://api.openai.com/v1"
 
 yomo run app.go
 ```
@@ -35,7 +35,6 @@ curl https://openai.vivgrid.com/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $VIVGRID_TOKEN" \
   -d '{
-     "model": "gpt-4o-mini",
      "messages": [{"role": "user", "content": "Hi, can you tell what the camera is seeing?"}]
    }'
 ```
@@ -55,7 +54,6 @@ curl https://openai.vivgrid.com/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $VIVGRID_TOKEN" \
   -d '{
-     "model": "gpt-4o-mini",
      "messages": [{"role": "user", "content": "Can you set the PLC output to true?"}]
    }'
 ```
@@ -75,7 +73,6 @@ curl https://openai.vivgrid.com/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $VIVGRID_TOKEN" \
   -d '{
-     "model": "gpt-4o-mini",
      "messages": [{"role": "user", "content": "Can you set the display number on the LED to 4005?"}]
    }'
 ```

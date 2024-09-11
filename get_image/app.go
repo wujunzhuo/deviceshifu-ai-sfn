@@ -40,50 +40,62 @@ func InputSchema() any {
 
 // Implement Handler() to handle the function call
 func Handler(ctx serverless.Context) {
-	var result string
-	defer ctx.WriteLLMResult(result)
+	ch := make(chan string)
 
-	body, err := httpGet("http://localhost:30080/deviceshifu-camera/capture")
-	if err != nil {
-		result = "an error occurred: " + err.Error()
-		return
-	}
+	go func() {
+		body, err := httpGet("http://localhost:30080/deviceshifu-camera/capture")
+		if err != nil {
+			ch <- "error: " + err.Error()
+			return
+		}
 
-	image := base64.StdEncoding.EncodeToString(body)
+		image := base64.StdEncoding.EncodeToString(body)
 
-	c := openai.DefaultConfig(os.Getenv("VIVGRID_TOKEN"))
-	c.BaseURL = "https://openai.vivgrid.com/v1"
-	client := openai.NewClientWithConfig(c)
+		config := openai.DefaultConfig(os.Getenv("OPENAI_API_KEY"))
+		if v, ok := os.LookupEnv("OPENAI_BASE_URL"); ok {
+			config.BaseURL = v
+		}
+		client := openai.NewClientWithConfig(config)
 
-	response, err := client.CreateChatCompletion(
-		context.Background(),
-		openai.ChatCompletionRequest{
-			// Model: "gpt-4o-mini",
-			Messages: []openai.ChatCompletionMessage{
-				{
-					Role: "user",
-					MultiContent: []openai.ChatMessagePart{
-						{
-							Type: "text",
-							Text: "please describe the given image",
-						},
-						{
-							Type: "img_url",
-							ImageURL: &openai.ChatMessageImageURL{
-								URL: image,
+		response, err := client.CreateChatCompletion(
+			context.Background(),
+			openai.ChatCompletionRequest{
+				Model: "gpt-4o-mini",
+				Messages: []openai.ChatCompletionMessage{
+					{
+						Role: "user",
+						MultiContent: []openai.ChatMessagePart{
+							{
+								Type: "text",
+								Text: "Thanks! Can you tell me what is in the image? Specifically what is the number on the display and does the PLC has 4 output lights on?",
+							},
+							{
+								Type: "image_url",
+								ImageURL: &openai.ChatMessageImageURL{
+									URL: "data:image/jpeg;base64," + image,
+								},
 							},
 						},
 					},
 				},
 			},
-		},
-	)
-	if err != nil {
-		result = "an error occurred: " + err.Error()
-		return
-	}
+		)
+		if err != nil {
+			ch <- "error: " + err.Error()
+			return
+		}
 
-	result = response.Choices[0].Message.Content
+		res := response.Choices[0].Message.Content
+
+		// res := "The display shows the number **3999**. As for the PLC, it appears to have **one output light** illuminated (the green one); there's no indication of four output lights being on based on the image."
+
+		ch <- "As a virtual camera assitant, I have taken an image for you. And the captured image shows the following information:\n" + res
+	}()
+
+	for res := range ch {
+		fmt.Println("res:", res)
+		ctx.WriteLLMResult(res)
+	}
 }
 
 func httpGet(url string) ([]byte, error) {
@@ -93,8 +105,7 @@ func httpGet(url string) ([]byte, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("http status:", resp.Status)
-		return nil, err
+		return nil, fmt.Errorf("http status: %s", resp.Status)
 	}
 
 	defer resp.Body.Close()
