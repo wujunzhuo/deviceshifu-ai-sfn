@@ -67,7 +67,7 @@ func Handler(ctx serverless.Context) {
 						MultiContent: []openai.ChatMessagePart{
 							{
 								Type: "text",
-								Text: "Thanks! Can you tell me what is in the image? Specifically what is the number on the display and does the PLC has 4 output lights on?",
+								Text: "Thanks! Can you tell me what is in the image? Specifically what is the number on the display and does the PLC has 4 output lights on? Please return in json format, like {\"display_number\":2929,\"plc_switch\":true}.",
 							},
 							{
 								Type: "image_url",
@@ -78,6 +78,29 @@ func Handler(ctx serverless.Context) {
 						},
 					},
 				},
+				// ResponseFormat: &openai.ChatCompletionResponseFormat{
+				// 	Type: openai.ChatCompletionResponseFormatTypeJSONSchema,
+				// 	JSONSchema: &openai.ChatCompletionResponseFormatJSONSchema{
+				// 		Name:        "image_info",
+				// 		Description: "the detail info from the captured image",
+				// 		Schema: jsonschema.Definition{
+				// 			Type: jsonschema.Object,
+				// 			Properties: map[string]jsonschema.Definition{
+				// 				"number": {
+				// 					Type:        jsonschema.Integer,
+				// 					Description: "the number on the display",
+				// 				},
+				// 				"switch": {
+				// 					Type:        jsonschema.Boolean,
+				// 					Description: "whether the PLC outputs lights are ON or OFF",
+				// 				},
+				// 			},
+				// 			Required:             []string{"number", "switch"},
+				// 			AdditionalProperties: false,
+				// 		},
+				// 		Strict: true,
+				// 	},
+				// },
 			},
 		)
 		if err != nil {
