@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -37,36 +39,53 @@ func InputSchema() any {
 
 // Implement Handler() to handle the function call
 func Handler(ctx serverless.Context) {
-	var result string
-	defer ctx.WriteLLMResult(result)
+	ch := make(chan string)
 
-	var msg Parameter
-	err := ctx.ReadLLMArguments(&msg)
-	if err != nil {
-		result = "an error occurred: " + err.Error()
-		return
+	go func() {
+		var msg Parameter
+		err := ctx.ReadLLMArguments(&msg)
+		if err != nil {
+			ch <- "error: " + err.Error()
+			return
+		}
+
+		_, err = httpPost(
+			"http://localhost:30080/deviceshifu-led/number",
+			&Req{
+				Value: msg.Number,
+			},
+		)
+		if err != nil {
+			ch <- "error: " + err.Error()
+			return
+		}
+
+		ch <- "success"
+	}()
+
+	for res := range ch {
+		fmt.Println("res:", res)
+		ctx.WriteLLMResult(res)
 	}
-
-	// buf, err := json.Marshal(struct)
-
-	_, err = httpPost("http://localhost:30080/deviceshifu-led/number")
-	if err != nil {
-		result = "an error occurred: " + err.Error()
-		return
-	}
-
-	result = ""
 }
 
-func httpPost(url string, body string) ([]byte, error) {
-	resp, err := http.Post(url, "application/json", nil)
+type Req struct {
+	Value int `json:"value"`
+}
+
+func httpPost(url string, req any) ([]byte, error) {
+	buf, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.Post(url, "application/json", bytes.NewReader(buf))
 	if err != nil {
 		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("http status:", resp.Status)
-		return nil, err
+		return nil, fmt.Errorf("http status: %s", resp.Status)
 	}
 
 	defer resp.Body.Close()

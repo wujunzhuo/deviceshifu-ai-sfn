@@ -37,32 +37,38 @@ func InputSchema() any {
 
 // Implement Handler() to handle the function call
 func Handler(ctx serverless.Context) {
-	var result string
-	defer ctx.WriteLLMResult(result)
+	ch := make(chan string)
 
-	var msg Parameter
-	err := ctx.ReadLLMArguments(&msg)
-	if err != nil {
-		result = "an error occurred: " + err.Error()
-		return
-	}
-
-	value := 0
-	if msg.Switch {
-		value = 1
-	}
-
-	for i := 0; i < 4; i++ {
-		url := fmt.Sprintf("http://localhost:30080/deviceshifu-plc/sendsinglebit?rootaddress=Q&address=0&start=0&digit=%d&value=%d", i, value)
-
-		_, err := httpGet(url)
+	go func() {
+		var msg Parameter
+		err := ctx.ReadLLMArguments(&msg)
 		if err != nil {
-			result = "an error occurred: " + err.Error()
+			ch <- "an error occurred: " + err.Error()
 			return
 		}
-	}
 
-	result = fmt.Sprintf("the PLC has been switched to %d", value)
+		value := 0
+		if msg.Switch {
+			value = 1
+		}
+
+		for i := 0; i < 4; i++ {
+			url := fmt.Sprintf("http://localhost:30080/deviceshifu-plc/sendsinglebit?rootaddress=Q&address=0&start=0&digit=%d&value=%d", i, value)
+
+			_, err = httpGet(url)
+			if err != nil {
+				ch <- "an error occurred: " + err.Error()
+				return
+			}
+		}
+
+		ch <- "success"
+	}()
+
+	for res := range ch {
+		fmt.Println("res:", res)
+		ctx.WriteLLMResult(res)
+	}
 }
 
 func httpGet(u string) ([]byte, error) {
@@ -72,8 +78,7 @@ func httpGet(u string) ([]byte, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("http status:", resp.Status)
-		return nil, err
+		return nil, fmt.Errorf("http status: %s", resp.Status)
 	}
 
 	defer resp.Body.Close()

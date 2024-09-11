@@ -1,4 +1,3 @@
-from random import randint
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 
@@ -7,14 +6,14 @@ app = FastAPI()
 
 @app.get('/deviceshifu-camera/capture')
 async def camera():
-    return FileResponse('./mock.jpg')
+    return FileResponse('./image.png')
 
 
 @app.get('/deviceshifu-plc/sendsinglebit')
-async def plc(value: int):
-    return {'switch': 'OPEN' if value else 'CLOSED'}
+async def plc():
+    return ''
 
 
-@app.get('/deviceshifu-led/number')
+@app.post('/deviceshifu-led/number')
 async def led():
-    return {'number': randint(0, 9)}
+    return ''
