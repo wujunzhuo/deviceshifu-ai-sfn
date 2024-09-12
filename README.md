@@ -76,3 +76,9 @@ curl https://openai.vivgrid.com/v1/chat/completions \
      "messages": [{"role": "user", "content": "Can you set the display number on the LED to 4005?"}]
    }'
 ```
+
+7. Run the whole process of the chat demo
+
+```sh
+jupyter-notebook chat.ipynb
+```

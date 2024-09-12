@@ -39,6 +39,7 @@ func InputSchema() any {
 
 // Implement Handler() to handle the function call
 func Handler(ctx serverless.Context) {
+	fmt.Println("start running handler")
 	ch := make(chan string)
 
 	go func() {

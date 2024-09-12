@@ -12,6 +12,8 @@ import (
 	"github.com/yomorun/yomo/serverless"
 )
 
+var apiKey string
+
 // Implement DataTags() to observe data with the given tags
 func DataTags() []uint32 {
 	return []uint32{0x11}
@@ -19,6 +21,9 @@ func DataTags() []uint32 {
 
 // Implement Init() for state initialization, such as loading LLM Model to GPU memory.
 func Init() error {
+	if v, ok := os.LookupEnv("VIVGRID_TOKEN"); ok {
+		apiKey = v
+	}
 	return nil
 }
 
@@ -40,6 +45,7 @@ func InputSchema() any {
 
 // Implement Handler() to handle the function call
 func Handler(ctx serverless.Context) {
+	fmt.Println("start running handler")
 	ch := make(chan string)
 
 	go func() {
@@ -51,16 +57,13 @@ func Handler(ctx serverless.Context) {
 
 		image := base64.StdEncoding.EncodeToString(body)
 
-		config := openai.DefaultConfig(os.Getenv("OPENAI_API_KEY"))
-		if v, ok := os.LookupEnv("OPENAI_BASE_URL"); ok {
-			config.BaseURL = v
-		}
+		config := openai.DefaultConfig(apiKey)
+		config.BaseURL = "https://openai.vivgrid.com/v1"
 		client := openai.NewClientWithConfig(config)
 
 		response, err := client.CreateChatCompletion(
 			context.Background(),
 			openai.ChatCompletionRequest{
-				Model: "gpt-4o-mini",
 				Messages: []openai.ChatCompletionMessage{
 					{
 						Role: "user",
@@ -109,8 +112,6 @@ func Handler(ctx serverless.Context) {
 		}
 
 		res := response.Choices[0].Message.Content
-
-		// res := "The display shows the number **3999**. As for the PLC, it appears to have **one output light** illuminated (the green one); there's no indication of four output lights being on based on the image."
 
 		ch <- "As a virtual camera assitant, I have taken an image for you. And the captured image shows the following information:\n" + res
 	}()

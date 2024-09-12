@@ -23,4 +23,6 @@ go.work.sum
 
 __pycache__
 
+.ipynb_checkpoints
+
 *.yomo
