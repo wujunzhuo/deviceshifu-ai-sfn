@@ -21,7 +21,7 @@ func DataTags() []uint32 {
 
 // Implement Init() for state initialization, such as loading LLM Model to GPU memory.
 func Init() error {
-	if v, ok := os.LookupEnv("VIVGRID_TOKEN"); ok {
+	if v, ok := os.LookupEnv("VIVGRID_TOKEN_WITHOUT_TOOLS"); ok {
 		apiKey = v
 	}
 	return nil
@@ -35,7 +35,7 @@ type Parameter struct {
 // Implement Description() to define the description of OpenAI Function Calling
 // ref: https://platform.openai.com/docs/guides/function-calling
 func Description() string {
-	return "A function that gets an image from the capture camera."
+	return "A function that gets current status of the LED display number and PLC state from a virtual capture camera."
 }
 
 // Implement InputSchema() to define the input schema of the function
@@ -70,7 +70,7 @@ func Handler(ctx serverless.Context) {
 						MultiContent: []openai.ChatMessagePart{
 							{
 								Type: "text",
-								Text: "Thanks! Can you tell me what is in the image? Specifically what is the number on the display and does the PLC has 4 output lights on? Please return in json format, like {\"display_number\":2929,\"plc_switch\":true}.",
+								Text: "Thanks! Can you tell me what is in the image? Specifically what is the display number on the LED and PLC state(whether it has 4 output lights on)? Please return in json format, like {\"led_display_number\":2929,\"plc_state\":true}.",
 							},
 							{
 								Type: "image_url",
@@ -81,29 +81,6 @@ func Handler(ctx serverless.Context) {
 						},
 					},
 				},
-				// ResponseFormat: &openai.ChatCompletionResponseFormat{
-				// 	Type: openai.ChatCompletionResponseFormatTypeJSONSchema,
-				// 	JSONSchema: &openai.ChatCompletionResponseFormatJSONSchema{
-				// 		Name:        "image_info",
-				// 		Description: "the detail info from the captured image",
-				// 		Schema: jsonschema.Definition{
-				// 			Type: jsonschema.Object,
-				// 			Properties: map[string]jsonschema.Definition{
-				// 				"number": {
-				// 					Type:        jsonschema.Integer,
-				// 					Description: "the number on the display",
-				// 				},
-				// 				"switch": {
-				// 					Type:        jsonschema.Boolean,
-				// 					Description: "whether the PLC outputs lights are ON or OFF",
-				// 				},
-				// 			},
-				// 			Required:             []string{"number", "switch"},
-				// 			AdditionalProperties: false,
-				// 		},
-				// 		Strict: true,
-				// 	},
-				// },
 			},
 		)
 		if err != nil {
@@ -111,9 +88,9 @@ func Handler(ctx serverless.Context) {
 			return
 		}
 
-		res := response.Choices[0].Message.Content
+		ch <- response.Choices[0].Message.Content
 
-		ch <- "As a virtual camera assitant, I have taken an image for you. And the captured image shows the following information:\n" + res
+		// ch <- "{\"led_display_number\":2929,\"plc_state\":true}"
 	}()
 
 	for res := range ch {

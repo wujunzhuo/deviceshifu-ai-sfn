@@ -23,7 +23,7 @@ func Init() error {
 // Parameters needed for OpenAI Function Calling
 // ref: https://platform.openai.com/docs/guides/function-calling
 type Parameter struct {
-	Number int `json:"num" jsonschema:"description=a number to display on the LED, between 0 and 9999"`
+	Number int `json:"number" jsonschema:"description=The display number on the LED, between 0 and 9999"`
 }
 
 // Implement Description() to define the description of OpenAI Function Calling

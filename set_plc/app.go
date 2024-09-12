@@ -21,13 +21,13 @@ func Init() error {
 // Parameters needed for OpenAI Function Calling
 // ref: https://platform.openai.com/docs/guides/function-calling
 type Parameter struct {
-	Switch bool `json:"switch" jsonschema:"description=To set the output to True or False"`
+	State bool `json:"state" jsonschema:"description=To set the PLC state to True or False"`
 }
 
 // Implement Description() to define the description of OpenAI Function Calling
 // ref: https://platform.openai.com/docs/guides/function-calling
 func Description() string {
-	return "A function that sets the output of the PLC."
+	return "A function that sets PLC state."
 }
 
 // Implement InputSchema() to define the input schema of the function
@@ -44,12 +44,12 @@ func Handler(ctx serverless.Context) {
 		var msg Parameter
 		err := ctx.ReadLLMArguments(&msg)
 		if err != nil {
-			ch <- "an error occurred: " + err.Error()
+			ch <- "error: " + err.Error()
 			return
 		}
 
 		value := 0
-		if msg.Switch {
+		if msg.State {
 			value = 1
 		}
 
@@ -58,7 +58,7 @@ func Handler(ctx serverless.Context) {
 
 			_, err = httpGet(url)
 			if err != nil {
-				ch <- "an error occurred: " + err.Error()
+				ch <- "error: " + err.Error()
 				return
 			}
 		}

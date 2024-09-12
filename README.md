@@ -12,20 +12,29 @@ go install github.com/yomorun/yomo/cmd/yomo@latest
 uvicorn mock_server:app --port 30080
 ```
 
-3. Get vivgrid.com token
+3. vivgrid.com
+
+https://dashboard.vivgrid.com
+
+set system prompt
+
+```text
+You are a helpful embodied intelligence assistant.Use the supplied tools to assist the user.If the final question is related to the current status of LED and PLC, please look up from the chat history first; and you should call the function "get-image" only if there's no clear answer in chat history.
+```
 
 ```sh
-export VIVGRID_TOKEN="********" # get from https://dashboard.vivgrid.com
+export VIVGRID_TOKEN="********"
 ```
 
 4. Run get_image SFN
+
+create a new project with no tools from vivgrid
 
 ```sh
 cd get_image
 
 export YOMO_SFN_CREDENTIAL="app-key-secret:$VIVGRID_TOKEN"
-export OPENAI_API_KEY="sk-******"
-export OPENAI_BASE_URL="https://api.openai.com/v1"
+export VIVGRID_TOKEN_WITHOUT_TOOLS="******"
 
 yomo run app.go
 ```

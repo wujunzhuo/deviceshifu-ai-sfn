@@ -1,4 +1,4 @@
-module deviceshifu-get-image
+module deviceshifu-set-plc
 
 go 1.23.1
 
